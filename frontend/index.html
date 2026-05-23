@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DonasiKomunitas — Micro-Crowdfunding di Stellar</title>
+    <meta name="description" content="Platform donasi terdesentralisasi berbasis Stellar Blockchain. Dukung kampanye sosial dengan XLM secara transparan, aman, dan tanpa perantara." />
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                        mono: ['Space Grotesk', 'monospace'],
+                    },
+                    colors: {
+                        stellar: {
+                            50:  '#f0f4ff',
+                            100: '#dce5ff',
+                            200: '#b2c5ff',
+                            300: '#7a9cff',
+                            400: '#3d6bff',
+                            500: '#1a47ff',
+                            600: '#0a2ef5',
+                            700: '#0722d4',
+                            800: '#0c1ea8',
+                            900: '#0d1d84',
+                            950: '#07104e',
+                        },
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'glow': 'glow 2s ease-in-out infinite alternate',
+                        'float': 'float 6s ease-in-out infinite',
+                        'progress': 'progress 1.5s ease-out forwards',
+                        'fadeInUp': 'fadeInUp 0.6s ease-out forwards',
+                        'slideIn': 'slideIn 0.3s ease-out forwards',
+                    },
+                    keyframes: {
+                        glow: {
+                            '0%': { boxShadow: '0 0 20px rgba(26, 71, 255, 0.3)' },
+                            '100%': { boxShadow: '0 0 40px rgba(26, 71, 255, 0.6)' },
+                        },
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0px)' },
+                            '50%': { transform: 'translateY(-10px)' },
+                        },
+                        fadeInUp: {
+                            '0%': { opacity: '0', transform: 'translateY(20px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        },
+                        slideIn: {
+                            '0%': { opacity: '0', transform: 'translateX(-10px)' },
+                            '100%': { opacity: '1', transform: 'translateX(0)' },
+                        },
+                        progress: {
+                            '0%': { width: '0%' },
+                        },
+                    },
+                    backgroundImage: {
+                        'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
+                    },
+                },
+            },
+        };
+    </script>
+
+    <style>
+        /* ============================================================
+           GLOBAL STYLES & VARIABLES
+           ============================================================ */
+        :root {
+            --bg-primary: #060a1a;
+            --bg-secondary: #0a1128;
+            --bg-card: rgba(15, 23, 50, 0.8);
+            --border-subtle: rgba(255, 255, 255, 0.07);
+            --text-muted: rgba(255, 255, 255, 0.5);
+            --stellar-glow: rgba(26, 71, 255, 0.4);
+            --success-glow: rgba(16, 185, 129, 0.4);
+            --danger-glow: rgba(239, 68, 68, 0.4);
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            background-color: var(--bg-primary);
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Animated background grid */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(26, 71, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(26, 71, 255, 0.03) 1px, transparent 1px);
+            background-size: 60px 60px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Radial glow behind main content */
+        body::after {
+            content: '';
+            position: fixed;
+            top: -20%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 70vw;
+            height: 70vh;
+            background: radial-gradient(ellipse, rgba(26, 71, 255, 0.12) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* ============================================================
+           GLASSMORPHISM CARDS
+           ============================================================ */
+        .glass-card {
+            background: var(--bg-card);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--border-subtle);
+            border-radius: 20px;
+        }
+
+        .glass-card-hover {
+            transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+        }
+
+        .glass-card-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4), 0 0 40px var(--stellar-glow);
+            border-color: rgba(26, 71, 255, 0.3);
+        }
+
+        /* ============================================================
+           PROGRESS BAR
+           ============================================================ */
+        .progress-container {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 100px;
+            overflow: hidden;
+            height: 14px;
+            position: relative;
+        }
+
+        .progress-bar {
+            height: 100%;
+            border-radius: 100px;
+            background: linear-gradient(90deg, #1a47ff 0%, #7c3aed 50%, #06b6d4 100%);
+            position: relative;
+            transition: width 1.5s cubic-bezier(0.16, 1, 0.3, 1);
+            min-width: 0%;
+        }
+
+        .progress-bar::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.3) 50%, transparent 100%);
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .progress-milestone {
+            position: absolute;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: 20px;
+            height: 20px;
+            background: var(--bg-secondary);
+            border: 2px solid rgba(26, 71, 255, 0.6);
+            border-radius: 50%;
+            z-index: 10;
+        }
+
+        /* ============================================================
+           COUNTDOWN TIMER
+           ============================================================ */
+        .countdown-digit {
+            background: rgba(26, 71, 255, 0.12);
+            border: 1px solid rgba(26, 71, 255, 0.25);
+            border-radius: 12px;
+            padding: 12px 16px;
+            min-width: 72px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .countdown-digit:hover {
+            background: rgba(26, 71, 255, 0.2);
+            border-color: rgba(26, 71, 255, 0.5);
+        }
+
+        .countdown-number {
+            font-family: 'Space Grotesk', monospace;
+            font-size: 2rem;
+            font-weight: 700;
+            line-height: 1;
+            color: #fff;
+        }
+
+        .countdown-label {
+            font-size: 0.65rem;
+            font-weight: 600;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        /* ============================================================
+           BUTTONS
+           ============================================================ */
+        .btn-primary {
+            background: linear-gradient(135deg, #1a47ff 0%, #7c3aed 100%);
+            border: none;
+            border-radius: 14px;
+            color: white;
+            font-weight: 700;
+            font-size: 0.95rem;
+            padding: 14px 28px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            overflow: hidden;
+            letter-spacing: 0.02em;
+        }
+
+        .btn-primary::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, #3d6bff 0%, #9c5cf0 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .btn-primary:hover::before { opacity: 1; }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 12px 40px rgba(26, 71, 255, 0.5); }
+        .btn-primary:active { transform: translateY(0); }
+        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+
+        .btn-success {
+            background: linear-gradient(135deg, #059669 0%, #06b6d4 100%);
+            border: none;
+            border-radius: 14px;
+            color: white;
+            font-weight: 700;
+            font-size: 0.95rem;
+            padding: 14px 28px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .btn-success:hover { transform: translateY(-2px); box-shadow: 0 12px 40px rgba(5, 150, 105, 0.5); }
+        .btn-success:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #dc2626 0%, #f59e0b 100%);
+            border: none;
+            border-radius: 14px;
+            color: white;
+            font-weight: 700;
+            font-size: 0.95rem;
+            padding: 14px 28px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .btn-danger:hover { transform: translateY(-2px); box-shadow: 0 12px 40px rgba(220, 38, 38, 0.4); }
+        .btn-danger:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+        .btn-wallet {
+            background: rgba(26, 71, 255, 0.12);
+            border: 1px solid rgba(26, 71, 255, 0.35);
+            border-radius: 12px;
+            color: white;
+            font-weight: 600;
+            font-size: 0.9rem;
+            padding: 10px 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-wallet:hover {
+            background: rgba(26, 71, 255, 0.25);
+            border-color: rgba(26, 71, 255, 0.6);
+            box-shadow: 0 0 20px rgba(26, 71, 255, 0.3);
+        }
+
+        .btn-wallet.connected {
+            background: rgba(16, 185, 129, 0.12);
+            border-color: rgba(16, 185, 129, 0.35);
+        }
+
+        .btn-wallet.connected:hover {
+            background: rgba(16, 185, 129, 0.2);
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+        }
+
+        /* ============================================================
+           INPUT FIELDS
+           ============================================================ */
+        .input-field {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            color: white;
+            font-size: 1rem;
+            font-family: 'Space Grotesk', monospace;
+            padding: 14px 16px;
+            transition: all 0.3s ease;
+            outline: none;
+        }
+
+        .input-field:focus {
+            background: rgba(26, 71, 255, 0.08);
+            border-color: rgba(26, 71, 255, 0.5);
+            box-shadow: 0 0 0 3px rgba(26, 71, 255, 0.15);
+        }
+
+        .input-field::placeholder { color: rgba(255,255,255,0.3); }
+
+        /* ============================================================
+           STATUS BADGE
+           ============================================================ */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 12px;
+            border-radius: 100px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .badge-active {
+            background: rgba(26, 71, 255, 0.15);
+            color: #7a9cff;
+            border: 1px solid rgba(26, 71, 255, 0.3);
+        }
+
+        .badge-success {
+            background: rgba(16, 185, 129, 0.15);
+            color: #34d399;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .badge-failed {
+            background: rgba(239, 68, 68, 0.15);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .pulse-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        /* ============================================================
+           TOAST NOTIFICATIONS
+           ============================================================ */
+        #toast-container {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            pointer-events: none;
+        }
+
+        .toast {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 16px 20px;
+            border-radius: 16px;
+            backdrop-filter: blur(16px);
+            max-width: 380px;
+            pointer-events: all;
+            animation: slideInRight 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        .toast-success {
+            background: rgba(5, 150, 105, 0.2);
+            border: 1px solid rgba(5, 150, 105, 0.4);
+        }
+
+        .toast-error {
+            background: rgba(220, 38, 38, 0.2);
+            border: 1px solid rgba(220, 38, 38, 0.4);
+        }
+
+        .toast-info {
+            background: rgba(26, 71, 255, 0.2);
+            border: 1px solid rgba(26, 71, 255, 0.4);
+        }
+
+        .toast-warning {
+            background: rgba(245, 158, 11, 0.2);
+            border: 1px solid rgba(245, 158, 11, 0.4);
+        }
+
+        @keyframes slideInRight {
+            0% { opacity: 0; transform: translateX(30px); }
+            100% { opacity: 1; transform: translateX(0); }
+        }
+
+        @keyframes slideOutRight {
+            0% { opacity: 1; transform: translateX(0); }
+            100% { opacity: 0; transform: translateX(30px); }
+        }
+
+        /* ============================================================
+           STAT NUMBERS
+           ============================================================ */
+        .stat-number {
+            font-family: 'Space Grotesk', monospace;
+            font-size: 2.2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #fff 0%, #7a9cff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1.1;
+        }
+
+        /* ============================================================
+           SKELETON LOADING
+           ============================================================ */
+        .skeleton {
+            background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%);
+            background-size: 200% 100%;
+            animation: skeleton-loading 1.5s infinite;
+            border-radius: 8px;
+        }
+
+        @keyframes skeleton-loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        /* ============================================================
+           LOADING SPINNER
+           ============================================================ */
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255,255,255,0.2);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            display: inline-block;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* ============================================================
+           CUSTOM SCROLLBAR
+           ============================================================ */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(26, 71, 255, 0.3); border-radius: 3px; }
+
+        /* ============================================================
+           SECTION ANIMATIONS
+           ============================================================ */
+        .animate-in { animation: fadeInUp 0.7s ease-out forwards; }
+        .animate-in:nth-child(2) { animation-delay: 0.1s; }
+        .animate-in:nth-child(3) { animation-delay: 0.2s; }
+        .animate-in:nth-child(4) { animation-delay: 0.3s; }
+
+        /* Number counter animation */
+        .count-up { transition: all 0.3s ease; }
+
+        /* Wallet address truncation */
+        .wallet-address {
+            font-family: 'Space Grotesk', monospace;
+            font-size: 0.8rem;
+        }
+
+        /* Campaign badge shimmer */
+        .badge-shimmer {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .badge-shimmer::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+            animation: shimmer 3s infinite;
+        }
+    </style>
+</head>
+<body class="text-white relative z-10">
+
+    <!-- ================================================================
+         TOAST NOTIFICATION CONTAINER
+         ================================================================ -->
+    <div id="toast-container"></div>
+
+    <!-- ================================================================
+         HEADER / NAVBAR
+         ================================================================ -->
+    <header class="sticky top-0 z-50 border-b border-white/[0.06]" style="background: rgba(6, 10, 26, 0.85); backdrop-filter: blur(20px);">
+        <nav class="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
+
+            <!-- Logo -->
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl flex items-center justify-center" style="background: linear-gradient(135deg, #1a47ff, #7c3aed);">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-base font-bold tracking-tight text-white">DonasiKomunitas</h1>
+                    <p class="text-xs" style="color: var(--text-muted);">Powered by Stellar & Soroban</p>
+                </div>
+            </div>
+
+            <!-- Network + Wallet -->
+            <div class="flex items-center gap-3">
+                <!-- Network Badge -->
+                <div class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full border" style="background: rgba(26,71,255,0.1); border-color: rgba(26,71,255,0.25);">
+                    <div class="w-2 h-2 rounded-full bg-blue-400 animate-pulse-slow"></div>
+                    <span class="text-xs font-semibold text-blue-300">Testnet</span>
+                </div>
+
+                <!-- Wallet Button -->
+                <button id="btn-connect-wallet" class="btn-wallet" onclick="handleWalletConnection()">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+                    </svg>
+                    <span id="wallet-label">Hubungkan Freighter</span>
+                </button>
+            </div>
+        </nav>
+    </header>
+
+    <!-- ================================================================
+         MAIN CONTENT
+         ================================================================ -->
+    <main class="max-w-6xl mx-auto px-4 sm:px-6 py-10 relative z-10">
+
+        <!-- Hero Section -->
+        <div class="text-center mb-12 animate-in">
+            <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-6 status-badge badge-active badge-shimmer" id="campaign-status-badge">
+                <div class="pulse-dot bg-blue-400"></div>
+                <span>Kampanye Aktif</span>
+            </div>
+            <h2 class="text-4xl sm:text-5xl font-extrabold mb-4 leading-tight">
+                Bersama Kita Bisa<br/>
+                <span style="background: linear-gradient(135deg, #7a9cff, #a78bfa, #22d3ee); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
+                    Wujudkan Perubahan
+                </span>
+            </h2>
+            <p class="text-lg max-w-xl mx-auto" style="color: var(--text-muted);">
+                Kampanye penggalangan dana terdesentralisasi di atas blockchain Stellar. Transparan, aman, dan tanpa perantara.
+            </p>
+        </div>
+
+        <!-- ============================================================
+             GRID LAYOUT
+             ============================================================ -->
+        <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
+
+            <!-- LEFT COLUMN: Stats + Countdown -->
+            <div class="lg:col-span-3 flex flex-col gap-6">
+
+                <!-- Campaign Image / Banner -->
+                <div class="glass-card glass-card-hover overflow-hidden animate-in" style="animation-delay: 0.1s;">
+                    <div class="relative h-52 flex items-center justify-center overflow-hidden rounded-t-xl" style="background: linear-gradient(135deg, #060a1a, #0d1a4a);">
+                        <!-- Decorative orbs -->
+                        <div class="absolute -top-10 -right-10 w-48 h-48 rounded-full opacity-20 animate-float" style="background: radial-gradient(circle, #1a47ff, transparent);"></div>
+                        <div class="absolute -bottom-10 -left-10 w-40 h-40 rounded-full opacity-15 animate-float" style="background: radial-gradient(circle, #7c3aed, transparent); animation-delay: 2s;"></div>
+
+                        <div class="relative text-center px-8">
+                            <div class="text-6xl mb-3">🏫</div>
+                            <h3 class="text-xl font-bold">Beasiswa Anak Berprestasi</h3>
+                            <p class="text-sm mt-1" style="color: var(--text-muted);">Membantu 50 siswa kurang mampu meraih pendidikan impian</p>
+                        </div>
+                    </div>
+
+                    <!-- Campaign Stats -->
+                    <div class="p-6">
+                        <!-- Amounts -->
+                        <div class="flex items-end justify-between mb-4">
+                            <div>
+                                <p class="text-xs font-semibold uppercase tracking-widest mb-1" style="color: var(--text-muted);">Terkumpul</p>
+                                <div class="stat-number" id="stat-collected">
+                                    <div class="skeleton w-32 h-8 rounded"></div>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-xs font-semibold uppercase tracking-widest mb-1" style="color: var(--text-muted);">Target</p>
+                                <div class="stat-number text-2xl" id="stat-target" style="-webkit-text-fill-color: rgba(255,255,255,0.4);">
+                                    <div class="skeleton w-24 h-7 rounded"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Progress Bar -->
+                        <div class="progress-container mb-3">
+                            <div class="progress-bar" id="progress-bar" style="width: 0%"></div>
+                        </div>
+
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm font-bold" id="stat-percentage" style="color: #7a9cff;">0%</span>
+                            <span class="text-xs" style="color: var(--text-muted);" id="stat-donors">— donatur</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Countdown Timer -->
+                <div class="glass-card p-6 animate-in" style="animation-delay: 0.2s;">
+                    <div class="flex items-center gap-2 mb-5">
+                        <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <h3 class="font-bold text-base">Sisa Waktu Kampanye</h3>
+                    </div>
+                    <div class="flex gap-3 justify-center sm:justify-start" id="countdown-container">
+                        <div class="countdown-digit">
+                            <div class="countdown-number" id="cd-days">--</div>
+                            <div class="countdown-label">Hari</div>
+                        </div>
+                        <div class="flex items-start pt-3 text-2xl font-bold text-blue-400">:</div>
+                        <div class="countdown-digit">
+                            <div class="countdown-number" id="cd-hours">--</div>
+                            <div class="countdown-label">Jam</div>
+                        </div>
+                        <div class="flex items-start pt-3 text-2xl font-bold text-blue-400">:</div>
+                        <div class="countdown-digit">
+                            <div class="countdown-number" id="cd-minutes">--</div>
+                            <div class="countdown-label">Menit</div>
+                        </div>
+                        <div class="flex items-start pt-3 text-2xl font-bold text-blue-400">:</div>
+                        <div class="countdown-digit">
+                            <div class="countdown-number" id="cd-seconds">--</div>
+                            <div class="countdown-label">Detik</div>
+                        </div>
+                    </div>
+                    <p class="text-xs mt-4" style="color: var(--text-muted);">
+                        Deadline: <span id="deadline-display" class="font-mono text-blue-300">Memuat...</span>
+                    </p>
+                </div>
+
+                <!-- Action Buttons (Conditional — shown after deadline) -->
+                <div id="action-section" class="glass-card p-6 hidden animate-in" style="animation-delay: 0.3s;">
+                    <h3 class="font-bold text-base mb-2">⚡ Aksi Tersedia</h3>
+                    <p class="text-sm mb-5" style="color: var(--text-muted);">Kampanye telah berakhir. Pilih aksi yang sesuai.</p>
+                    <div class="flex flex-col sm:flex-row gap-3">
+                        <!-- Admin: Klaim Dana (sukses) -->
+                        <button id="btn-withdraw" class="btn-success w-full hidden" onclick="handleWithdraw()">
+                            <span>💰 Klaim Dana (Admin)</span>
+                        </button>
+                        <!-- Donor: Minta Refund (gagal) -->
+                        <button id="btn-refund" class="btn-danger w-full hidden" onclick="handleRefund()">
+                            <span>↩️ Minta Refund</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT COLUMN: Donation Form + Tx Log -->
+            <div class="lg:col-span-2 flex flex-col gap-6">
+
+                <!-- Donation Form -->
+                <div class="glass-card p-6 animate-in" style="animation-delay: 0.15s;">
+                    <h3 class="font-bold text-lg mb-1">💎 Kirim Donasi</h3>
+                    <p class="text-sm mb-6" style="color: var(--text-muted);">Donasi dalam XLM via Freighter Wallet</p>
+
+                    <!-- Amount Input -->
+                    <div class="mb-4">
+                        <label class="block text-xs font-semibold uppercase tracking-widest mb-2" style="color: var(--text-muted);">
+                            Jumlah (XLM)
+                        </label>
+                        <div class="relative">
+                            <input
+                                type="number"
+                                id="donation-amount"
+                                class="input-field pr-16"
+                                placeholder="0.00"
+                                min="1"
+                                step="1"
+                            />
+                            <span class="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-bold" style="color: var(--text-muted);">XLM</span>
+                        </div>
+                    </div>
+
+                    <!-- Quick Amount Buttons -->
+                    <div class="flex gap-2 mb-5 flex-wrap">
+                        <button class="quick-amt text-xs px-3 py-1.5 rounded-lg font-semibold transition-all" style="background: rgba(26,71,255,0.12); border: 1px solid rgba(26,71,255,0.25); color: #7a9cff;" data-amount="10" onclick="setQuickAmount(10)">10 XLM</button>
+                        <button class="quick-amt text-xs px-3 py-1.5 rounded-lg font-semibold transition-all" style="background: rgba(26,71,255,0.12); border: 1px solid rgba(26,71,255,0.25); color: #7a9cff;" data-amount="50" onclick="setQuickAmount(50)">50 XLM</button>
+                        <button class="quick-amt text-xs px-3 py-1.5 rounded-lg font-semibold transition-all" style="background: rgba(26,71,255,0.12); border: 1px solid rgba(26,71,255,0.25); color: #7a9cff;" data-amount="100" onclick="setQuickAmount(100)">100 XLM</button>
+                        <button class="quick-amt text-xs px-3 py-1.5 rounded-lg font-semibold transition-all" style="background: rgba(26,71,255,0.12); border: 1px solid rgba(26,71,255,0.25); color: #7a9cff;" data-amount="500" onclick="setQuickAmount(500)">500 XLM</button>
+                    </div>
+
+                    <!-- XLM to Stroops preview -->
+                    <div class="rounded-xl p-3 mb-5 text-sm" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07);">
+                        <div class="flex justify-between items-center">
+                            <span style="color: var(--text-muted);">Nilai dalam Stroops</span>
+                            <span class="font-mono font-bold text-blue-300" id="stroops-preview">—</span>
+                        </div>
+                        <div class="flex justify-between items-center mt-1.5">
+                            <span style="color: var(--text-muted);">Wallet Anda</span>
+                            <span class="font-mono text-xs" id="wallet-balance" style="color: var(--text-muted);">Belum terhubung</span>
+                        </div>
+                    </div>
+
+                    <!-- Donate Button -->
+                    <button id="btn-donate" class="btn-primary w-full flex items-center justify-center gap-2" onclick="handleDonate()">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                        </svg>
+                        <span>Kirim Donasi</span>
+                    </button>
+
+                    <!-- Warning: wallet not connected -->
+                    <p id="wallet-warning" class="text-xs text-center mt-3" style="color: #f59e0b;">
+                        ⚠️ Hubungkan Freighter Wallet terlebih dahulu
+                    </p>
+                </div>
+
+                <!-- My Donation Info -->
+                <div id="my-donation-card" class="glass-card p-5 animate-in hidden" style="animation-delay: 0.25s;">
+                    <h3 class="font-bold text-sm mb-3" style="color: var(--text-muted);">📋 Donasi Anda</h3>
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm">Total donasi</span>
+                        <span class="font-mono font-bold text-blue-300" id="my-donation-amount">0 XLM</span>
+                    </div>
+                </div>
+
+                <!-- Transaction Log -->
+                <div class="glass-card p-5 animate-in" style="animation-delay: 0.3s;">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="font-bold text-sm">📜 Log Transaksi</h3>
+                        <button onclick="clearTxLog()" class="text-xs px-2 py-1 rounded" style="color: var(--text-muted); transition: color 0.2s;" onmouseover="this.style.color='white'" onmouseout="this.style.color='rgba(255,255,255,0.5)'">Hapus</button>
+                    </div>
+                    <div id="tx-log" class="space-y-2 max-h-64 overflow-y-auto pr-1">
+                        <div class="text-xs text-center py-6" style="color: var(--text-muted);">
+                            <svg class="w-8 h-8 mx-auto mb-2 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                            </svg>
+                            Belum ada transaksi
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Contract Info -->
+                <div class="glass-card p-5 animate-in" style="animation-delay: 0.35s;">
+                    <h3 class="font-bold text-sm mb-3" style="color: var(--text-muted);">🔗 Info Kontrak</h3>
+                    <div class="space-y-2">
+                        <div>
+                            <p class="text-xs mb-1" style="color: var(--text-muted);">Contract ID</p>
+                            <p class="text-xs font-mono break-all" style="color: #7a9cff;" id="info-contract-id">—</p>
+                        </div>
+                        <div>
+                            <p class="text-xs mb-1" style="color: var(--text-muted);">Network</p>
+                            <p class="text-xs font-mono" id="info-network">Testnet (Futurenet)</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- ================================================================
+         FOOTER
+         ================================================================ -->
+    <footer class="border-t border-white/[0.06] mt-16 py-8">
+        <div class="max-w-6xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <p class="text-sm" style="color: var(--text-muted);">
+                © 2025 <span class="font-bold text-white">DonasiKomunitas</span> — Built on Stellar & Soroban
+            </p>
+            <div class="flex items-center gap-4 text-xs" style="color: var(--text-muted);">
+                <a href="https://stellar.org" target="_blank" class="hover:text-white transition-colors">stellar.org</a>
+                <a href="https://soroban.stellar.org" target="_blank" class="hover:text-white transition-colors">soroban.stellar.org</a>
+                <a href="https://stellarchain.io" target="_blank" class="hover:text-white transition-colors">Explorer</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- ================================================================
+         JAVASCRIPT
+         ================================================================ -->
+    <script type="module" src="index.js"></script>
+
+</body>
+</html>

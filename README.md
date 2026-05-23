@@ -1,118 +1,286 @@
-# Stellar Notes DApp
+# DonasiKomunitas — Micro-Crowdfunding dApp on Stellar/Soroban
 
-**Stellar Notes DApp** - Blockchain-Based Decentralized Note-Taking System
-
-## Project Description
-
-Stellar Notes DApp is a decentralized smart contract solution built on the Stellar blockchain using Soroban SDK. It provides a secure, immutable platform for managing personal notes directly on the blockchain. The contract ensures that your data is stored transparently and is only manageable through predefined smart contract functions, eliminating reliance on centralized database providers.
-
-The system allows users to create, view, and delete notes, leveraging the efficiency and security of the Stellar network. Each note is uniquely identified and stored within the contract's instance storage, ensuring data persistence and reliability.
-
-## Project Vision
-
-Our vision is to revolutionize personal productivity in the digital age by:
-
-- **Decentralizing Data**: Moving note-taking from centralized servers to a global, distributed blockchain
-- **Ensuring Ownership**: Empowering users to have complete control and ownership over their digital thoughts and information
-- **Guaranteeing Immutability**: Providing a permanent, tamper-proof record of notes that cannot be altered or deleted by third parties
-- **Enhancing Privacy**: Leveraging blockchain security to protect personal information from unauthorized access
-- **Building Trustless Systems**: Creating a platform where data integrity is guaranteed by code, not by company promises
-
-We envision a future where digital information is truly personal and sovereign, empowering individuals with complete autonomy over their digital assets.
-
-## Key Features
-
-### 1. **Simple Note Creation**
-
-- Create notes with just one function call
-- Specify title and content for each note
-- Automated ID generation for unique identification
-- Persistent storage on the Stellar blockchain
-
-### 2. **Efficient Data Retrieval**
-
-- Fetch all stored notes in a single call
-- Structured data representation for easy frontend integration
-- Quick access to your entire note collection
-- Real-time synchronization with the blockchain state
-
-### 3. **Secure Deletion**
-
-- Remove specific notes using their unique IDs
-- Permanent removal from the contract storage
-- Clean and efficient storage management
-- Immediate update of the note list after deletion
-
-### 4. **Transparency and Security**
-
-- View all note activities on the blockchain
-- Blockchain-based verification of all storage actions
-- Immutable records of note creation and deletion
-- Protected against unauthorized modifications
-
-### 5. **Stellar Network Integration**
-
-- Leverages the high speed and low cost of Stellar
-- Built using the modern Soroban Smart Contract SDK
-- Scalable architecture for growing note collections
-- Interoperable with other Stellar-based services
-
-## Contract Details
-
-- Contract Address: CBLU4IUASQ4WUMOXBFLZRSBBLILGOH33GS4LUPKFBCCCMJCDQNMF7G2M
-  (Screenshot has been removed)
-
-## Future Scope
-
-### Short-Term Enhancements
-
-1. **Note Encryption**: Support for end-to-end encryption of note content for enhanced privacy
-2. **Category Management**: Add tags and categories to organize notes efficiently
-3. **Rich Text Support**: Extend support beyond plain text to include Markdown and formatted content
-4. **Search Functionality**: Implement advanced search filters for large note collections
-
-### Medium-Term Development
-
-5. **Collaborative Notes**: Implement multi-signature requirements for shared or collaborative note-taking
-   - Shared access for multiple addresses
-   - Permission-based editing and viewing
-   - Version history tracking
-6. **Notification System**: Off-chain bridge to alert users of new updates or shared notes
-7. **Asset Attachment**: Capability to attach digital assets or tokens to specific notes
-8. **Inter-Contract Integration**: Allow other smart contracts to interact with and store data in the notes contract
-
-### Long-Term Vision
-
-9. **Cross-Chain Synchronization**: Extend note storage to multiple blockchain networks
-10. **Decentralized UI Hosting**: Host the frontend on IPFS or similar decentralized platforms
-11. **AI-Powered Summarization**: Optional integration with AI to help users summarize their notes
-12. **Privacy Layers**: Implement zero-knowledge proofs for completely private note content
-13. **DAO Governance**: Community-driven protocol improvements and feature prioritization
-14. **Identity Management**: Integration with decentralized identity (DID) systems for user management
-
-### Enterprise Features
-
-15. **Corporate Documentation**: Adapt the system for secure corporate record-keeping
-16. **Immutable Logging**: Create time-locked logs for audit purposes
-17. **Automated Reporting**: Automatic note triggers for periodic reporting
-18. **Multi-Language Support**: Expand accessibility with internationalization
+> Platform donasi terdesentralisasi berbasis Stellar Blockchain. Transparan, aman, tanpa perantara.
 
 ---
 
-## Technical Requirements
+## 📁 Struktur Proyek
 
-- Soroban SDK
-- Rust programming language
-- Stellar blockchain network
-
-## Getting Started
-
-Deploy the smart contract to Stellar's Soroban network and interact with it using the three main functions:
-
-- `create_note()` - Create a new note with a title and content
-- `get_notes()` - Retrieve all stored notes from the contract
-- `delete_note()` - Remove a specific note by its ID
+```
+soroban-project/
+├── Cargo.toml                          # Workspace Rust manifest
+├── Cargo.lock
+├── contracts/
+│   └── donasi-komunitas/               # Smart Contract Soroban
+│       ├── Cargo.toml
+│       └── src/
+│           └── lib.rs                  # Kode kontrak utama
+└── frontend/
+    ├── index.html                      # UI (Tailwind CSS)
+    └── index.js                        # Logika (Stellar SDK + Freighter)
+```
 
 ---
 
-**Stellar Notes DApp** - Securing Your Thoughts on the Blockchain
+## ⚙️ Prasyarat
+
+### Tools yang Diperlukan
+
+| Tool | Versi | Link Instalasi |
+|------|-------|----------------|
+| Rust + Cargo | stable | https://rustup.rs |
+| Soroban CLI | ≥ 22.x | `cargo install --locked soroban-cli` |
+| Freighter Wallet | Latest | https://freighter.app (ekstensi Chrome/Firefox) |
+| Node.js | ≥ 18.x | https://nodejs.org |
+
+### Install Soroban CLI
+
+```bash
+cargo install --locked soroban-cli --features opt
+```
+
+### Tambahkan target WebAssembly
+
+```bash
+rustup target add wasm32-unknown-unknown
+```
+
+---
+
+## 🔨 Langkah 1 — Compile Smart Contract
+
+Dari direktori root `soroban-project/`:
+
+```bash
+# Build semua contract di workspace
+soroban contract build
+
+# atau spesifik ke donasi-komunitas saja
+cd contracts/donasi-komunitas
+cargo build --target wasm32-unknown-unknown --release
+```
+
+File WASM akan ada di:
+```
+target/wasm32-unknown-unknown/release/donasi_komunitas.wasm
+```
+
+> **Tip:** Gunakan `soroban contract build` dari root workspace untuk path yang benar.
+
+---
+
+## 🆔 Langkah 2 — Setup Identity (Keypair) di Testnet
+
+```bash
+# Generate keypair baru untuk admin kampanye
+soroban keys generate admin --network testnet
+
+# Tampilkan public key admin
+soroban keys address admin
+
+# Fund akun dengan Friendbot (faucet Testnet)
+soroban keys fund admin --network testnet
+```
+
+---
+
+## 🚀 Langkah 3 — Deploy Kontrak ke Testnet
+
+```bash
+soroban contract deploy \
+  --wasm target/wasm32-unknown-unknown/release/donasi_komunitas.wasm \
+  --source admin \
+  --network testnet
+```
+
+**Output:** Contract ID dalam format `C...` (56 karakter)
+
+```
+ℹ️  Simulating deploy transaction…
+🔑 Signing transaction: ...
+📡 Sending transaction…
+✅ Transaction included in ledger.
+Contract ID: CXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+```
+
+**Simpan Contract ID ini!** Anda akan menggunakannya di langkah berikutnya.
+
+---
+
+## 🎛️ Langkah 4 — Initialize Kampanye
+
+Setelah deploy, panggil `initialize` untuk mengatur parameter kampanye:
+
+```bash
+# Cari alamat XLM Native Asset Contract (diperlukan sebagai token_id)
+soroban contract id asset \
+  --asset native \
+  --network testnet
+
+# Initialize kontrak
+soroban contract invoke \
+  --id <CONTRACT_ID_ANDA> \
+  --source admin \
+  --network testnet \
+  -- \
+  initialize \
+  --admin $(soroban keys address admin) \
+  --token_id <NATIVE_ASSET_CONTRACT_ID> \
+  --target_amount 50000000000 \
+  --duration_seconds 604800
+```
+
+### Parameter Initialize:
+
+| Parameter | Contoh | Keterangan |
+|-----------|--------|------------|
+| `admin` | Alamat G... | Public key pembuat kampanye |
+| `token_id` | Alamat C... | Contract ID XLM Native Asset |
+| `target_amount` | `50000000000` | 5000 XLM (1 XLM = 10^7 stroops) |
+| `duration_seconds` | `604800` | 7 hari (7 × 24 × 3600) |
+
+---
+
+## 🖥️ Langkah 5 — Konfigurasi Frontend
+
+Edit file `frontend/index.js` dan ganti nilai `CONTRACT_ID`:
+
+```javascript
+const CONFIG = {
+    // ⚠️ Ganti dengan Contract ID hasil deploy Anda
+    CONTRACT_ID: "CXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+    
+    NETWORK_PASSPHRASE: Networks.TESTNET,
+    RPC_URL: "https://soroban-testnet.stellar.org",
+    HORIZON_URL: "https://horizon-testnet.stellar.org",
+    STROOPS_PER_XLM: 10_000_000n,
+};
+```
+
+---
+
+## 🌐 Langkah 6 — Jalankan Frontend
+
+Frontend ini adalah file statis. Jalankan menggunakan server lokal:
+
+```bash
+# Opsi 1: npx serve (direkomendasikan)
+cd frontend
+npx serve .
+
+# Opsi 2: Python HTTP server
+cd frontend
+python -m http.server 8080
+
+# Opsi 3: VS Code Live Server
+# Klik kanan index.html → Open with Live Server
+```
+
+Buka browser: **http://localhost:3000** (atau port yang ditampilkan)
+
+---
+
+## 📋 Referensi Perintah Soroban CLI
+
+### Cek Status Kampanye
+
+```bash
+soroban contract invoke \
+  --id <CONTRACT_ID> \
+  --source admin \
+  --network testnet \
+  -- \
+  get_status
+```
+
+### Donasi Manual (tanpa frontend)
+
+```bash
+soroban contract invoke \
+  --id <CONTRACT_ID> \
+  --source donor-keypair \
+  --network testnet \
+  -- \
+  donate \
+  --donor <ALAMAT_DONOR> \
+  --amount 10000000
+```
+
+### Withdraw (Admin)
+
+```bash
+soroban contract invoke \
+  --id <CONTRACT_ID> \
+  --source admin \
+  --network testnet \
+  -- \
+  withdraw
+```
+
+### Refund (Donor)
+
+```bash
+soroban contract invoke \
+  --id <CONTRACT_ID> \
+  --source donor-keypair \
+  --network testnet \
+  -- \
+  refund \
+  --donor <ALAMAT_DONOR>
+```
+
+### Cek Donasi Per Alamat
+
+```bash
+soroban contract invoke \
+  --id <CONTRACT_ID> \
+  --network testnet \
+  -- \
+  get_donor_amount \
+  --donor <ALAMAT>
+```
+
+---
+
+## 🧪 Jalankan Unit Tests
+
+```bash
+# Dari direktori kontrak
+cd contracts/donasi-komunitas
+cargo test
+
+# Dengan output verbose
+cargo test -- --nocapture
+```
+
+---
+
+## 🔍 Konversi Satuan
+
+| XLM | Stroops |
+|-----|---------|
+| 1 XLM | 10,000,000 |
+| 10 XLM | 100,000,000 |
+| 100 XLM | 1,000,000,000 |
+| 1000 XLM | 10,000,000,000 |
+| 5000 XLM | 50,000,000,000 |
+
+---
+
+## 🌐 RPC Endpoints Stellar Testnet
+
+| Endpoint | URL |
+|----------|-----|
+| Soroban RPC | https://soroban-testnet.stellar.org |
+| Horizon | https://horizon-testnet.stellar.org |
+| Explorer | https://stellar.expert/explorer/testnet |
+| Friendbot | https://friendbot.stellar.org |
+
+---
+
+## 📖 Resources
+
+- [Soroban Docs](https://soroban.stellar.org/docs)
+- [Stellar SDK JS](https://stellar.github.io/js-stellar-sdk/)
+- [Freighter API Docs](https://docs.freighter.app/)
+- [Stellar Lab (Testnet)](https://laboratory.stellar.org/#account-creator?network=test)
