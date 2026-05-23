@@ -1,7 +1,7 @@
 # DonasiKomunitas — Micro-Crowdfunding dApp on Stellar/Soroban
 
 > Platform donasi terdesentralisasi berbasis Stellar Blockchain. Transparan, aman, tanpa perantara.
-
+CONTRACT_ID : https://lab.stellar.org/r/testnet/contract/CA76SC5U73PGJITG7F3DEWBKJHZ5AFAO4X4CX5IW5ENU6WSDEFZDV3W7
 ---
 
 ## 📁 Struktur Proyek
